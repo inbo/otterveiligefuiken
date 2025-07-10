@@ -20,26 +20,31 @@ library(leaflet)
 Gebieden in VIS waar met schietfuiken gevangen is:
 
 ```{r}
-connectie_vis <- connect_inbo_dbase("W0001_00_Vis")
+connectie_vis <- connect_inbo_dbase("W0001_10_Vis")
 
-query <- "SELECT DISTINCT dw.GebiedKey, dg.Gebiedcode, dg.Gebiednaam,
-  dg.Long, dg.Lat, dg.Gemeentenaam, dg.VHAG, dg.Bekken, dg.Stilstaand,
-  dw.Methodecode, dg.LambertX, dg.LambertY
+query <- "SELECT DISTINCT dv.VispuntID, dv.VispuntCode, dv.VispuntOmschrijving,
+  dv.LongWGS84, dv.LatWGS84, dv.VHAVispuntGemeente, dv.VHAVispuntNaam,
+  dv.VHAVispuntBekkenNaam, dw.WaarnemingMethodecode, dv.VispuntX, dv.VispuntY,
+  dv.WaterlichaamNaam
 FROM DimWaarneming dw
-INNER JOIN DimGebied dg ON dw.GebiedKey = dg.GebiedKey
-WHERE dw.Methodecode like 'SF%'"
+INNER JOIN DimVispunt dv ON dw.WaarnemingVispuntID = dv.VispuntID
+WHERE dw.WaarnemingMethodecode like 'SF%'"
 
 location_SF <- dbGetQuery(connectie_vis, query, stringsAsFactors = FALSE)
 
 location_SF_geom <- location_SF %>%
-  st_as_sf(coords = c("LambertX", "LambertY"), crs = 31370) %>%
+  st_as_sf(coords = c("VispuntX", "VispuntY"), crs = 31370) %>%
   st_transform(crs = 4326)
 
 pal <- colorFactor(c("blue", "brown", "yellow"), domain = c("SF", "SFB", "SFO"))
 
 leaflet(data = location_SF_geom) %>%
   addTiles() %>%
-  addCircleMarkers(popup = ~Gebiednaam, label = ~Gebiednaam, color = ~pal(Methodecode))
+  addCircleMarkers(
+    popup = ~VHAVispuntNaam,
+    label = ~VHAVispuntNaam,
+    color = ~pal(WaarnemingMethodecode)
+  )
 ```
 
 ## Op zoek naar relevante gegevens om een idee te krijgen van de variatie
@@ -50,52 +55,53 @@ Samenvatting:
 
 ```{r}
 location_SF %>%
-  filter(Methodecode == "SFB") %>%
+  filter(WaarnemingMethodecode == "SFB") %>%
   left_join(
     location_SF %>%
-      select(GebiedKey, Methodecode) %>%
-      filter(Methodecode != "SFB"),
-    by = "GebiedKey"
+      select(VispuntID, WaarnemingMethodecode) %>%
+      filter(WaarnemingMethodecode != "SFB"),
+    by = "VispuntID"
   ) %>%
-  count(Methodecode.x, Methodecode.y)
+  count(WaarnemingMethodecode.x, WaarnemingMethodecode.y)
 ```
 
 Details:
 
 ```{r}
 location_SF %>%
-  filter(Methodecode == "SFB") %>%
+  filter(WaarnemingMethodecode == "SFB") %>%
   left_join(
     location_SF %>%
-      select(GebiedKey, Methodecode) %>%
-      filter(Methodecode != "SFB"),
-    by = "GebiedKey"
+      select(VispuntID, WaarnemingMethodecode) %>%
+      filter(WaarnemingMethodecode != "SFB"),
+    by = "VispuntID"
   )
 ```
 
 Wanneer is er op hetzelfde moment op die plaatsen gevangen?
 
 ```{r}
-query <- "SELECT DISTINCT dw.GebiedKey, dg.Gebiedcode, dg.Gebiednaam,
-  dg.Long, dg.Lat, dg.Gemeentenaam, dg.VHAG, dg.Bekken, dg.Stilstaand,
-  dw.Methodecode, dw.Begindatum, dw.Einddatum, LambertX, LambertY
+query <- "SELECT DISTINCT dv.VispuntID, dv.VispuntCode, dv.VHAVispuntNaam,
+  dv.LongWGS84, dv.LatWGS84, dv.VHAVispuntGemeente, dv.VHAVispuntBekkenNaam,
+  dw.WaarnemingMethodecode, dw.WaarnemingDatumWID, dv.VispuntX, dv.VispuntY,
+  dv.WaterlichaamNaam
 FROM DimWaarneming dw
-INNER JOIN DimGebied dg ON dw.GebiedKey = dg.GebiedKey
-WHERE dw.Methodecode like 'SF%'"
+INNER JOIN DimVispunt dv ON dw.WaarnemingVispuntID = dv.VispuntID
+WHERE dw.WaarnemingMethodecode like 'SF%'"
 
 waarneming_SF <- dbGetQuery(connectie_vis, query, stringsAsFactors = FALSE)
 
 waarneming_SF %>%
-  select(-LambertX, -LambertY) %>%
-  filter(Methodecode == "SFB") %>%
+  select(-VispuntX, -VispuntY) %>%
+  filter(WaarnemingMethodecode == "SFB") %>%
   inner_join(
     waarneming_SF %>%
-      select(GebiedKey, Methodecode, Begindatum, Einddatum) %>%
-      filter(Methodecode != "SFB", Einddatum > as.POSIXct("2023-01-01")),
-    by = "GebiedKey",
+      select(VispuntID, WaarnemingMethodecode, WaarnemingDatumWID) %>%
+      filter(WaarnemingMethodecode != "SFB", WaarnemingDatumWID > 20230101),
+    by = "VispuntID",
     relationship = "many-to-many"
   ) %>%
-  filter(Begindatum.x == Begindatum.y, Einddatum.x == Einddatum.y)
+  filter(WaarnemingDatumWID.x == WaarnemingDatumWID.y)
 ```
 
 Wat als het niet op hetzelfde moment is?
@@ -103,10 +109,15 @@ Wat als het niet op hetzelfde moment is?
 ```{r}
 waarneming_SF %>%
   filter(
-    GebiedKey %in% (waarneming_SF %>% filter(Methodecode == "SFB"))$GebiedKey,
-    Begindatum > as.POSIXct("2022-01-01")
+    VispuntID %in%
+      (waarneming_SF %>% filter(WaarnemingMethodecode == "SFB"))$VispuntID,
+    WaarnemingDatumWID > 20220101
   ) %>%
-  ggplot(aes(x = Begindatum, y = Gebiedcode, colour = Methodecode)) + geom_point()
+  ggplot(
+    aes(
+      x = WaarnemingDatumWID, y = VispuntCode, colour = WaarnemingMethodecode
+    )
+  ) + geom_point()
 ```
 
 Eens enkele gebieden ruimtelijk bekijken, bv. het Vinne en het Schulensmeer?
@@ -117,14 +128,18 @@ Vinne
 ```{r}
 waarneming_SF %>%
   filter(
-    VHAG == "Vinne",
-    Begindatum > as.POSIXct("2022-01-01")
+    WaterlichaamNaam == "Vinne",
+    WaarnemingDatumWID > 20220101
   ) %>%
-  st_as_sf(coords = c("LambertX", "LambertY"), crs = 31370) %>%
+  st_as_sf(coords = c("VispuntX", "VispuntY"), crs = 31370) %>%
   st_transform(crs = 4326) %>%
   leaflet() %>%
   addTiles() %>%
-  addCircleMarkers(popup = ~Begindatum, label = ~Begindatum, color = ~pal(Methodecode))
+  addCircleMarkers(
+    popup = ~WaarnemingDatumWID,
+    label = ~WaarnemingDatumWID,
+    color = ~pal(WaarnemingMethodecode)
+  )
 ```
 
 Schulensmeer
@@ -132,13 +147,17 @@ Schulensmeer
 ```{r}
 waarneming_SF %>%
   filter(
-    VHAG == "Schulens Meer",
-    Begindatum > as.POSIXct("2022-01-01")
+    WaterlichaamNaam == "Schulens Meer",
+    WaarnemingDatumWID > 20220101
   ) %>%
-  st_as_sf(coords = c("LambertX", "LambertY"), crs = 31370) %>%
+  st_as_sf(coords = c("VispuntX", "VispuntY"), crs = 31370) %>%
   st_transform(crs = 4326) %>%
   leaflet() %>%
   addTiles() %>%
-  addCircleMarkers(popup = ~Begindatum, label = ~Begindatum, color = ~pal(Methodecode))
+  addCircleMarkers(
+    popup = ~WaarnemingDatumWID,
+    label = ~WaarnemingDatumWID,
+    color = ~pal(WaarnemingMethodecode)
+  )
 ```
 
