@@ -1,5 +1,5 @@
 ---
-title: "Verkenning otterprooffuiken"
+title: "Verkenning otterveilige fuiken"
 format:
   html:
     code-fold: true
@@ -30,15 +30,15 @@ FROM DimWaarneming dw
 INNER JOIN DimVispunt dv ON dw.WaarnemingVispuntID = dv.VispuntID
 WHERE dw.WaarnemingMethodecode like 'SF%'"
 
-location_SF <- dbGetQuery(connectie_vis, query, stringsAsFactors = FALSE)
+location_sf <- dbGetQuery(connectie_vis, query, stringsAsFactors = FALSE)
 
-location_SF_geom <- location_SF %>%
+location_sf_geom <- location_sf %>%
   st_as_sf(coords = c("VispuntX", "VispuntY"), crs = 31370) %>%
   st_transform(crs = 4326)
 
 pal <- colorFactor(c("blue", "brown", "yellow"), domain = c("SF", "SFB", "SFO"))
 
-leaflet(data = location_SF_geom) %>%
+leaflet(data = location_sf_geom) %>%
   addTiles() %>%
   addCircleMarkers(
     popup = ~VHAVispuntNaam,
@@ -54,10 +54,10 @@ Schietfuiken met beverbescherming en evt. gewone schietfuiken op dezelfde locati
 Samenvatting:
 
 ```{r}
-location_SF %>%
+location_sf %>%
   filter(WaarnemingMethodecode == "SFB") %>%
   left_join(
-    location_SF %>%
+    location_sf %>%
       select(VispuntID, WaarnemingMethodecode) %>%
       filter(WaarnemingMethodecode != "SFB"),
     by = "VispuntID"
@@ -68,10 +68,10 @@ location_SF %>%
 Details:
 
 ```{r}
-location_SF %>%
+location_sf %>%
   filter(WaarnemingMethodecode == "SFB") %>%
   left_join(
-    location_SF %>%
+    location_sf %>%
       select(VispuntID, WaarnemingMethodecode) %>%
       filter(WaarnemingMethodecode != "SFB"),
     by = "VispuntID"
@@ -89,13 +89,13 @@ FROM DimWaarneming dw
 INNER JOIN DimVispunt dv ON dw.WaarnemingVispuntID = dv.VispuntID
 WHERE dw.WaarnemingMethodecode like 'SF%'"
 
-waarneming_SF <- dbGetQuery(connectie_vis, query, stringsAsFactors = FALSE)
+waarneming_sf <- dbGetQuery(connectie_vis, query, stringsAsFactors = FALSE)
 
-waarneming_SF %>%
+waarneming_sf %>%
   select(-VispuntX, -VispuntY) %>%
   filter(WaarnemingMethodecode == "SFB") %>%
   inner_join(
-    waarneming_SF %>%
+    waarneming_sf %>%
       select(VispuntID, WaarnemingMethodecode, WaarnemingDatumWID) %>%
       filter(WaarnemingMethodecode != "SFB", WaarnemingDatumWID > 20230101),
     by = "VispuntID",
@@ -107,7 +107,7 @@ waarneming_SF %>%
 Wat als het niet op hetzelfde moment is?
 
 ```{r}
-waarneming_SF %>%
+waarneming_sf %>%
   filter(
     VispuntID %in%
       (waarneming_SF %>% filter(WaarnemingMethodecode == "SFB"))$VispuntID,
@@ -126,7 +126,7 @@ Eens enkele gebieden ruimtelijk bekijken, bv. het Vinne en het Schulensmeer?
 Vinne
 
 ```{r}
-waarneming_SF %>%
+waarneming_sf %>%
   filter(
     WaterlichaamNaam == "Vinne",
     WaarnemingDatumWID > 20220101
@@ -145,7 +145,7 @@ waarneming_SF %>%
 Schulensmeer
 
 ```{r}
-waarneming_SF %>%
+waarneming_sf %>%
   filter(
     WaterlichaamNaam == "Schulens Meer",
     WaarnemingDatumWID > 20220101
