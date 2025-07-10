@@ -1,0 +1,144 @@
+---
+title: "Verkenning otterprooffuiken"
+format:
+  html:
+    code-fold: true
+    code-summary: "Show the code"
+---
+
+```{r}
+#| include: false
+library(tidyverse)
+library(DBI)
+library(inbodb)
+library(sf)
+library(leaflet)
+```
+
+## Waar wordt gevangen in de buurt waar ook otters voorkomen?
+
+Gebieden in VIS waar met schietfuiken gevangen is:
+
+```{r}
+connectie_vis <- connect_inbo_dbase("W0001_00_Vis")
+
+query <- "SELECT DISTINCT dw.GebiedKey, dg.Gebiedcode, dg.Gebiednaam,
+  dg.Long, dg.Lat, dg.Gemeentenaam, dg.VHAG, dg.Bekken, dg.Stilstaand,
+  dw.Methodecode, dg.LambertX, dg.LambertY
+FROM DimWaarneming dw
+INNER JOIN DimGebied dg ON dw.GebiedKey = dg.GebiedKey
+WHERE dw.Methodecode like 'SF%'"
+
+location_SF <- dbGetQuery(connectie_vis, query, stringsAsFactors = FALSE)
+
+location_SF_geom <- location_SF %>%
+  st_as_sf(coords = c("LambertX", "LambertY"), crs = 31370) %>%
+  st_transform(crs = 4326)
+
+pal <- colorFactor(c("blue", "brown", "yellow"), domain = c("SF", "SFB", "SFO"))
+
+leaflet(data = location_SF_geom) %>%
+  addTiles() %>%
+  addCircleMarkers(popup = ~Gebiednaam, label = ~Gebiednaam, color = ~pal(Methodecode))
+```
+
+## Op zoek naar relevante gegevens om een idee te krijgen van de variatie
+
+Schietfuiken met beverbescherming en evt. gewone schietfuiken op dezelfde locatie:
+
+Samenvatting:
+
+```{r}
+location_SF %>%
+  filter(Methodecode == "SFB") %>%
+  left_join(
+    location_SF %>%
+      select(GebiedKey, Methodecode) %>%
+      filter(Methodecode != "SFB"),
+    by = "GebiedKey"
+  ) %>%
+  count(Methodecode.x, Methodecode.y)
+```
+
+Details:
+
+```{r}
+location_SF %>%
+  filter(Methodecode == "SFB") %>%
+  left_join(
+    location_SF %>%
+      select(GebiedKey, Methodecode) %>%
+      filter(Methodecode != "SFB"),
+    by = "GebiedKey"
+  )
+```
+
+Wanneer is er op hetzelfde moment op die plaatsen gevangen?
+
+```{r}
+query <- "SELECT DISTINCT dw.GebiedKey, dg.Gebiedcode, dg.Gebiednaam,
+  dg.Long, dg.Lat, dg.Gemeentenaam, dg.VHAG, dg.Bekken, dg.Stilstaand,
+  dw.Methodecode, dw.Begindatum, dw.Einddatum, LambertX, LambertY
+FROM DimWaarneming dw
+INNER JOIN DimGebied dg ON dw.GebiedKey = dg.GebiedKey
+WHERE dw.Methodecode like 'SF%'"
+
+waarneming_SF <- dbGetQuery(connectie_vis, query, stringsAsFactors = FALSE)
+
+waarneming_SF %>%
+  select(-LambertX, -LambertY) %>%
+  filter(Methodecode == "SFB") %>%
+  inner_join(
+    waarneming_SF %>%
+      select(GebiedKey, Methodecode, Begindatum, Einddatum) %>%
+      filter(Methodecode != "SFB", Einddatum > as.POSIXct("2023-01-01")),
+    by = "GebiedKey",
+    relationship = "many-to-many"
+  ) %>%
+  filter(Begindatum.x == Begindatum.y, Einddatum.x == Einddatum.y)
+```
+
+Wat als het niet op hetzelfde moment is?
+
+```{r}
+waarneming_SF %>%
+  filter(
+    GebiedKey %in% (waarneming_SF %>% filter(Methodecode == "SFB"))$GebiedKey,
+    Begindatum > as.POSIXct("2022-01-01")
+  ) %>%
+  ggplot(aes(x = Begindatum, y = Gebiedcode, colour = Methodecode)) + geom_point()
+```
+
+Eens enkele gebieden ruimtelijk bekijken, bv. het Vinne en het Schulensmeer?
+(Hoveren over de punten geeft de datum.)
+
+Vinne
+
+```{r}
+waarneming_SF %>%
+  filter(
+    VHAG == "Vinne",
+    Begindatum > as.POSIXct("2022-01-01")
+  ) %>%
+  st_as_sf(coords = c("LambertX", "LambertY"), crs = 31370) %>%
+  st_transform(crs = 4326) %>%
+  leaflet() %>%
+  addTiles() %>%
+  addCircleMarkers(popup = ~Begindatum, label = ~Begindatum, color = ~pal(Methodecode))
+```
+
+Schulensmeer
+
+```{r}
+waarneming_SF %>%
+  filter(
+    VHAG == "Schulens Meer",
+    Begindatum > as.POSIXct("2022-01-01")
+  ) %>%
+  st_as_sf(coords = c("LambertX", "LambertY"), crs = 31370) %>%
+  st_transform(crs = 4326) %>%
+  leaflet() %>%
+  addTiles() %>%
+  addCircleMarkers(popup = ~Begindatum, label = ~Begindatum, color = ~pal(Methodecode))
+```
+
