@@ -110,7 +110,7 @@ Wat als het niet op hetzelfde moment is?
 waarneming_sf %>%
   filter(
     VispuntID %in%
-      (waarneming_SF %>% filter(WaarnemingMethodecode == "SFB"))$VispuntID,
+      (waarneming_sf %>% filter(WaarnemingMethodecode == "SFB"))$VispuntID,
     WaarnemingDatumWID > 20220101
   ) %>%
   ggplot(
@@ -119,6 +119,21 @@ waarneming_sf %>%
     )
   ) + geom_point()
 ```
+
+```{r}
+waarneming_sf %>%
+  filter(
+    VispuntID %in%
+      (waarneming_sf %>% filter(WaarnemingMethodecode == "SFB"))$VispuntID,
+    WaarnemingDatumWID > 20223101,
+    grepl("^ZG", VispuntCode)
+  ) %>%
+  select(VispuntCode, WaarnemingMethodecode, WaarnemingDatumWID)
+```
+
+Tussen die vangsten zitten maanden tussen, dus lijkt niet zinvol om ze te vergelijken.
+
+
 
 Eens enkele gebieden ruimtelijk bekijken, bv. het Vinne en het Schulensmeer?
 (Hoveren over de punten geeft de datum.)
@@ -160,4 +175,72 @@ waarneming_sf %>%
     color = ~pal(WaarnemingMethodecode)
   )
 ```
+
+## Waar verwachten we impact op de EQR?
+
+Te verwachten impact op resultaat van index:
+
+- bij fuikvangsten
+- waar aantal lengteklassen van belang is
+- soortenrijkdom als grotere soorten?
+
+Dus effecten of mogelijke effecten bij:
+
+- Brasem en Barbeel
+    - MnsTot (alle soorten)
+    - ManTol ?
+    - ManTyp ?
+    - ManSoort ?
+    - ManBio
+    - MpgExo ?
+    - TrofComp ?
+    - MpsRekr
+- meren
+    - BenWei
+    - MpiOmn
+    - MniPis ?
+    - ManTol
+- kanalen
+    - ManRec
+    - BenWei
+- estuarien IJzer
+    - MnsEst ?
+    - MnsDia ?
+    - RmniDia
+    - MnsMjs ?
+    - MnsTyp ?
+- estuarien Schelde zoetwater
+    - MnsTot ?
+    - MniInd
+    - MpiDia
+    - MpiSpa
+    - MpiPis
+    - MpiBen
+- estuarien Schelde oligohalien
+    - MnsPis
+    - MnsInt
+    - MnsDia
+    - MniInd
+    - MnsMms ?
+    - MnsErs ?
+    - MnsTot ?
+- estuarien Schelde mesohalien
+    - MnsTot ?
+    - MnsDia ?
+    - MnsSpa ?
+    - MnsHab ?
+    - MpiInd
+    - MnsMms ?
+- estuarien Schelde brak
+    - MnsTot
+    - MpiSme ?
+    - MpiMjm
+    - MpiOmn
+    - MpiPis
+- estuarien zijrivieren zoet
+    - ManSha ?
+    - MpiInv
+    - MpiSpa
+    - MnsPis ?
+    - MnsTot
 
