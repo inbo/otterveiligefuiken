@@ -1,0 +1,64 @@
+---
+title: "proefopzet"
+format: html
+---
+
+## Achtergrond
+
+Doel van de studie is om het effect van otterveilige fuiken op de gevangen vispopulatie en op de EQR in functie van de KRW te bestuderen.
+Verwachte impact is dat grote vissen mogelijk minder vaak gevangen worden of helemaal niet, wat bij de EQR mogelijk een invloed kan hebben op
+
+- het aantal gevangen grootte-klassen
+- het aantal gevangen individuen of het gewicht
+- het aantal gevangen soorten
+
+Voor otterveilige fuiken (otterpreventie) is het idee om 2 opties testen:
+
+- fuik waarbij in de eerste keel een mesh zit waar otter niet door kan (en bijgevolg grote vissen ook niet)
+- fuik waarbij in de eerste keel een mesh zit waar bever niet door kan, en in de tweede keel een mesh waar otter niet door kan, gehoopt wordt dat hier grotere vissen wel in zwemmen en achter de eerste mesh blijven zitten, en dat een otter slim genoeg is om hier uit te geraken
+
+OPMERKING: Een bedenking is dat bij een proefopzet met 1 controle en 2 testopstellingen met gelijkaardige resultaten zeer veel herhalingen nodig zullen zijn om een significant verschil te kunnen aantonen.
+Het zou dus beter zijn om 1 test en 1 controle te doen (zie ook opmerking in het werkdocument met de proefopzet).
+Dus we gaan voor het vervolg van dit document uit van 1 testfuiktype en 1 controle, nog te beslissen welk we nemen (dit maakt niet uit voor de simulatie).
+
+Idee voor proefopzet:
+
+- telkens testfuik en controle samenzetten, 10 herhalingen per plas in een week (of was het 20?)
+- te onderzoeken plassen:
+    - het Vinne, waar veel brasem en karper van verschillende lengteklassen zitten die uitzonderlijk gemakkelijk in de fuiken zwemmen?
+    - het Schulensmeer, waar een zeer grote soortenrijkdom zit?
+- daarnaast ook een materiaaltest in de Schelde met enkele fuiken, maar om het aantal herhalingen en de werklast te beperken, lijkt het niet ideaal om veel uiteenlopende lokaties te samplen
+- seizoenseffect? vangsten in plassen gebeuren altijd in het najaar, idee is om dit nu ook in het najaar te doen
+- opties: na 2 dagen leeghalen of 4 dagen laten staan, normaal wordt in plassen 2 dagen gedaan (4 dagen zou meer vis kunnen opleveren)
+
+
+## Verwachte verschillen
+
+- geen of minder individuen van hoogste grootte-klassen
+- impact hiervan op aantal gevangen individuen en totaalgewicht (en op percentages voor piscivore,... soorten)
+- impact op soortenrijkdom als kans om grotere soorten te vangen verkleint
+
+## Hypothese
+
+Er is geen verschil in het aantal individuen en de lengteverdeling van de vissen
+
+## Model
+
+vooronderzoek:
+aantal_ind ~ (1 | soort) + (soort|plas) + (soort|plas:locatie_id)  + (soort|plas:jaar)
+
+steekproef per soort:
+
+aantal_ind ~ fuiktype + (1|locatie_id)
+
+
+eigenlijke experiment:
+
+
+aantal_ind ~ fuiktype + (fuiktype | soort) + (1|soort:locatie_id) 
+
+
+aantal_ind ~ soort + plas + fuiktype + soort * fuiktype
+
+verdeling lengteklassen?
+
