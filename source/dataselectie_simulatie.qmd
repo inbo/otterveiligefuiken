@@ -1,0 +1,122 @@
+---
+title: "Gegevens verzamelen voor simulatie"
+format: html
+---
+
+# Voorwaarden voor selectie
+
+Om de nodige parameters te kunnen afleiden om simulaties te kunnen uitvoeren,
+worden meetgegevens geselecteerd die voldoen aan de volgende voorwaarden:
+
+- locatie: plassen
+- vangst met fuik (niet-beverveilig) <!-- opletten: is niet genoteerd de 3de in het Vinne)-->
+- alle vissen gevangen en opgemeten
+
+```{r}
+#| include: false
+library(tidyverse)
+library(DBI)
+library(inbodb)
+```
+
+```{r}
+connectie_vis <- connect_inbo_dbase("W0001_10_Vis")
+
+query <- "
+SELECT dv.VispuntID, dv.VispuntCode, dv.WaterlichaamNaam,
+  dv.VispuntX, dv.VispuntY,
+  dw.WaarnemingWID, dw.WaarnemingMethodecode, dw.WaarnemingDatumWID,
+  dd.Jaar,
+  fm.TaxonWID, dt.TaxonCode, dt.NaamNL, dt.NaamWET,
+  fm.MetingTaxonAantal, fm.MetingTaxonLengteTotaal, fm.MetingTaxonGewicht
+FROM DimVispunt dv
+  INNER JOIN DimWaarneming dw ON dv.VispuntID = dw.WaarnemingVispuntID
+  INNER JOIN DimDatum dd ON dw.WaarnemingDatumWID = dd.DatumWID
+  INNER JOIN FactMeting fm ON dw.WaarnemingWID = fm.WaarnemingWID
+  INNER JOIN DimTaxon dt ON fm.TaxonWID = dt.TaxonWID
+WHERE dw.WaarnemingMethodecode = 'SF'
+ AND dw.WaarnemingProjectWID in (1,2)
+ AND dv.VispuntIndexType = 'lakes'"
+
+metingen_meren <- dbGetQuery(connectie_vis, query, stringsAsFactors = FALSE)
+dbDisconnect(connectie_vis)
+```
+
+Hoeveel fuiken per waterlichaam, en in hoeveel jaren bemonsterd?
+
+```{r}
+metingen_meren |>
+  distinct(VispuntCode, WaterlichaamNaam, Jaar) |>
+  summarise(
+    n_punten = length(unique(VispuntCode)),
+    n_jaar = length(unique(Jaar)),
+    .by = WaterlichaamNaam
+  ) |>
+  arrange(desc(n_punten))
+```
+
+Beperken tot plassen met minstens 20 fuiken
+
+```{r}
+meren <- metingen_meren |>
+  distinct(WaterlichaamNaam, VispuntCode) %>%
+  count(WaterlichaamNaam) |>
+  filter(n >= 20)
+
+metingen_meren <- metingen_meren |>
+  filter(WaterlichaamNaam %in% meren$WaterlichaamNaam)
+```
+
+Welke vissen?
+
+```{r}
+metingen_meren |>
+  count(NaamNL) |>
+  arrange(desc(n))
+metingen_meren |>
+  count(WaterlichaamNaam, NaamNL) |>
+  pivot_wider(names_from = WaterlichaamNaam, , values_from = n)
+```
+
+Op basis van de input van Gerlinde en deze verdeling lijkt Baars me een goede om mee te beginnen,
+andere goede keuzes zouden blankvoorn, paling, snoekbaars,... kunnen zijn.
+(We laten wel alle soorten in de dataset om achteraf gemakkelijker de parameters te kunnen berekenen voor extra soorten.)
+
+```{r}
+metingen_meren |>
+  filter(NaamNL == "baars") |>
+  group_by(Jaar, WaterlichaamNaam, VispuntCode) |>
+  summarise(
+    ind_metingen = sum(MetingTaxonAantal == 1),
+    groepsmetingen = sum(MetingTaxonAantal > 1)
+  ) |>
+  group_by(Jaar, WaterlichaamNaam) |>
+  summarise(
+    tot_enkel_ind_metingen = sum(ind_metingen * groepsmetingen == 0),
+    aantal_fuiken_ind_metingen = sum(ind_metingen > 0 & groepsmetingen == 0),
+    aantal_fuiken_groepsmetinen = sum(groepsmetingen > 0),
+    tot_aantal_fuiken = length(unique(VispuntCode))
+  )
+```
+
+Als er zeer veel exemplaren gevangen zijn (> 100 van een soort per locatie) dan zijn niet alle vissen opgemeten als tijdsbesparende maatregel.
+Van de eerst opgehaalde fuiken worden wel alle vissen gemeten,
+en dit gebeurt met elke fuik tot er minstens 100 vissen van die soort opgemeten zijn.
+Daarna wordt er een inschatting gemaakt:
+- als de grootteverdeling lijkt af te wijken van de eerdere vangsten, worden ze toch opgemeten.
+- Uitzonderlijk grote exemplaren worden ook opgemeten
+- anders wordt enkel het aantal geteld en het totaalgewicht gemeten
+
+Vermits we voor onze simulatie het aantal en de grootteverdeling van de gevangen vissen per fuik willen kennen,
+gaan we enkel gegevens gebruiken van fuiken waarvan alle vissen van die soort individueel opgemeten zijn.
+
+```{r}
+niet_volledig_gemeten <- metingen_meren |>
+  filter(MetingTaxonAantal > 1) |>
+  distinct(WaarnemingWID, TaxonWID)
+
+metingen_meren <- metingen_meren |>
+  anti_join(niet_volledig_gemeten, by = c("WaarnemingWID", "TaxonWID"))
+```
+
+<!-- idee is om met de uiteindelijke set de nodige parameters te berekenen voor de simulatie -->
