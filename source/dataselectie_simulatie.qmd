@@ -119,4 +119,65 @@ metingen_meren <- metingen_meren |>
   anti_join(niet_volledig_gemeten, by = c("WaarnemingWID", "TaxonWID"))
 ```
 
+Voor het Vinne zijn er op 3 oktober 2024 verschillende types beverveilige fuiken getest,
+maar dit is niet genoteerd, dus de fuiken van die datum laten we buiten beschouwing.
+
+```{r}
+metingen_meren <- metingen_meren |>
+  filter(!(WaterlichaamNaam == "Vinne" & WaarnemingDatumWID == "20241003"))
+```
+
+```{r}
+max_vislengte_otterfuik <- data.frame(
+  NaamNL = c("Europese meerval", "paling"),
+  max_lengte = c(20, 40)
+)
+aantal_vissen <- metingen_meren |>
+  left_join(
+    max_vislengte_otterfuik,
+    by = "NaamNL"
+  ) |>
+  mutate(
+    max_lengte = ifelse(is.na(max_lengte), 17, max_lengte),
+    waterlichaam = factor(WaterlichaamNaam),
+    waterlichaam_id = as.numeric(waterlichaam)
+  ) |>
+  group_by(
+    VispuntCode, waterlichaam, waterlichaam_id, WaarnemingDatumWID, Jaar,
+    TaxonWID, TaxonCode, NaamNL, NaamWET
+  ) |>
+  summarise(
+    SF = sum(MetingTaxonAantal),
+    SFO = sum(MetingTaxonLengteTotaal <= max_lengte)
+  ) |>
+  ungroup() |>
+  pivot_longer(
+    cols = c("SF", "SFO"), names_to = "fuiktype", values_to = "aantal_ind"
+  )
+
+library(lme4)
+lmer(
+  aantal_ind ~ fuiktype + (1 | waterlichaam_id),
+  data = aantal_vissen[aantal_vissen$NaamNL == "blankvoorn", ]
+)
+lmer(
+  aantal_ind ~ fuiktype + (1 | waterlichaam_id),
+  data = aantal_vissen[aantal_vissen$NaamNL == "baars", ]
+)
+lmer(
+  aantal_ind ~ fuiktype + (1 | waterlichaam_id),
+  data = aantal_vissen[aantal_vissen$NaamNL == "paling", ]
+)
+lmer(
+  aantal_ind ~ fuiktype + (1 | waterlichaam_id),
+  data = aantal_vissen[aantal_vissen$NaamNL == "snoekbaars", ]
+)
+lmer(
+  aantal_ind ~ fuiktype + (1 | waterlichaam_id),
+  data = aantal_vissen[aantal_vissen$NaamNL == "brasem", ]
+)
+```
+
+
+
 <!-- idee is om met de uiteindelijke set de nodige parameters te berekenen voor de simulatie -->
