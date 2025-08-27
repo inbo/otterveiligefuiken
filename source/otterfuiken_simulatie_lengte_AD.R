@@ -15,6 +15,10 @@ source("source/R/display_power.R")
 source("source/R/predict_power.R")
 source("source/R/estimate_trend_pos.R")
 
+source("source/R/sim_3p_waterlichaam.R")
+source("source/R/estimate_trend_pos_waterlichaam.R")
+
+
 
 afvissingsdata <- read_csv("data/afvissingsdata.csv") |>
   transmute(
@@ -95,10 +99,10 @@ estimate_trend_pos(
   n_vispunt = 10,
   drempel_lengte = 20,
   voorkeur_standaard = 0.5,
-  count_intercept = 0,
-  count_sd_waterlichaam = 2e-13,
-  count_sd_datum = 2e-10,
-  count_sd_vispunt = 3e-15,
+  count_intercept = 1.2,
+  count_sd_waterlichaam = 2e-8,
+  count_sd_datum = 2.2,
+  count_sd_vispunt = 1.2,
   n_sim = 100,
   alpha = 0.10,   # significantieniveau (α)
   power = 0.90,   # gewenste statistische power
@@ -107,6 +111,33 @@ estimate_trend_pos(
     duckdb::duckdb(), dbdir = "C:/Users/els_lommelen/Documents/data/otterveiligefuiken/power_cc.duckdb", read_only = FALSE
   )
 )
+
+# effect van waterlichaam uitschakelen:
+# - bij 1 waterlichaam specifiek kiezen voor welbepaald waterlichaam
+# - random intercept uit formule van waterlichaam weghalen, en het intercept van dat specifieke waterlichaam toevoegen -> gekozen waterlichaam ook als parameter in databank opslaan
+estimate_trend_pos_waterlichaam(
+  soortnaam = "snoekbaars",
+  lengte_soort = empirical_length |> filter(soort == "snoekbaars"),
+  n_datum = 2,
+  n_vispunt = 5,
+  drempel_lengte = 20,
+  voorkeur_standaard = 0.5,
+  count_intercept = 1.2,
+  intercept_waterlichaam = 0,
+  count_sd_datum = 2.2,
+  count_sd_vispunt = 1.2,
+  n_sim = 100,
+  alpha = 0.10,   # significantieniveau (α)
+  power = 0.90,   # gewenste statistische power
+  step_size = 1,
+  connection = duckdb::dbConnect(
+    duckdb::duckdb(), dbdir = "C:/Users/els_lommelen/Documents/data/otterveiligefuiken/power_cc.duckdb", read_only = FALSE
+  )
+)
+
+
+
+
 # deze wordt geoptimaliseerd om het verschil in lengte te kunnen detecteren
 
 # Nadat we hebben kunnen achterhalen hoe groot de steekproef moet zijn om een verschil in lengte te kunnen detecteren, nagaan welk verschil in aantal vissen (voorkeur voor een bepaalde val) we met deze steekproefgrootte zouden kunnen berekenen
