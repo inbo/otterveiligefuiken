@@ -92,7 +92,7 @@ sim_3p <- function(
         do.call(what = ad.test.combined)
     )
     if (inherits(m2, "try-error")) {
-      p2 <- rep(NA_real_, 2)
+      p2 <- c("version 1:" = NA_real_, "version 2:" = NA_real_)
     } else {
       p2 <- m2$ad.c[, 3]
     }
