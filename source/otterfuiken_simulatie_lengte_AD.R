@@ -36,7 +36,11 @@ empirical_aantal <- afvissingsdata |>
   summarise(
     aantal = sum(.data$aantal)
   ) |>
-  ungroup()
+  ungroup() |>
+  complete(
+    nesting(waterlichaam, vispunt_id, datum_id), soort,
+    fill = list(aantal = 0)
+  )
 
 empirical_aantal |>
   group_by(.data$waterlichaam, .data$soort) |>

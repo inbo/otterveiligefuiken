@@ -6,14 +6,9 @@ calculate_sd_for_species <- function(
 ) {
   # model voor aantal vissen per waterlichaam, vispunt en datum
   n_fish <- empirical_aantal |>
-    filter(.data$soort == soortnaam) |>
-    count(.data$waterlichaam, .data$vispunt_id, .data$datum_id) |>
-    complete(
-      nesting(waterlichaam, datum_id, vispunt_id),
-      fill = list(n = 0)
-    )
+    filter(.data$soort == soortnaam)
   model_count <- glmmTMB(
-    n ~ (1 | waterlichaam) + (1 | datum_id) + (1 | vispunt_id),
+    aantal ~ (1 | waterlichaam) + (1 | datum_id) + (1 | vispunt_id),
     data = n_fish,
     family = poisson(link = "log")
   )
