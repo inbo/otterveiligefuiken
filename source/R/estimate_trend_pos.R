@@ -60,6 +60,7 @@ estimate_trend_pos <- function(
   if (!"trend" %in% dbListTables(conn = connection)) {
     #   dbRemoveTable(conn = connection, name = "trend")
     data.frame(
+      methode = character(0),
       soortnaam = character(0),
       n_waterlichaam = integer(0),
       n_datum = integer(0),
@@ -90,6 +91,7 @@ estimate_trend_pos <- function(
           COUNT(n_datum) AS sims
    FROM trend
    WHERE soortnaam = '%s'
+     AND methode = 'n waterlichamen'
      AND n_waterlichaam         = %d
      AND n_vispunt           = %d
      AND ABS(drempel_lengte - %f) < 1e-4
@@ -141,6 +143,7 @@ estimate_trend_pos <- function(
       n_sim = n_sim
     )
     data.frame(
+      methode = "n waterlichamen",
       soortnaam = soortnaam,
       n_waterlichaam = n_waterlichaam,
       n_datum = n_datum,
@@ -195,6 +198,7 @@ estimate_trend_pos <- function(
       n_sim = n_sim
     )
     data.frame(
+      methode = "n waterlichamen",
       soortnaam = soortnaam,
       n_waterlichaam = n_waterlichaam,
       n_datum = extra,
@@ -311,6 +315,7 @@ estimate_trend_pos <- function(
       n_sim = n_sim
     )
     data.frame(
+      methode = "n waterlichamen",
       soortnaam = soortnaam,
       n_waterlichaam = n_waterlichaam,
       n_datum = extra,
