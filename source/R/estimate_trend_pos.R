@@ -88,7 +88,8 @@ estimate_trend_pos <- function(
           SUM(p1v1 < %f) AS significant_1_lengte,
           SUM(p2v1 < %f) AS significant_2_lengte_aantal,
           SUM(p3 < %f) AS significant_3_aantal,
-          COUNT(n_datum) AS sims
+          COUNT(n_datum) AS sims,
+          SUM(p2v2 IS NOT NULL) AS sims_p2
    FROM trend
    WHERE soortnaam = '%s'
      AND methode = 'n waterlichamen'
@@ -120,7 +121,13 @@ estimate_trend_pos <- function(
       names_to = "modeltype",
       names_pattern = "significant_(\\d_\\w*)",
       values_to = "significant"
+    ) |> # correctie omdat het tweede model veel simulaties met NA heeft
+    mutate(
+      sims =
+        ifelse(.data$modeltype == "2_lengte_aantal", .data$sims_p2, .data$sims),
+      sims_p2 = NULL
     ) |>
+    filter(!is.na(significant)) |>
     mutate(
       simpower = .data$significant / .data$sims
     ) -> sims
@@ -168,7 +175,13 @@ estimate_trend_pos <- function(
         names_to = "modeltype",
         names_pattern = "significant_(\\d_\\w*)",
         values_to = "significant"
+      ) |> # correctie omdat het tweede model veel simulaties met NA heeft
+      mutate(
+        sims =
+          ifelse(.data$modeltype == "2_lengte_aantal", .data$sims_p2, .data$sims),
+        sims_p2 = NULL
       ) |>
+      filter(!is.na(significant)) |>
       mutate(
         simpower = .data$significant / .data$sims,
         lcl = map2(.data$significant, .data$sims, ~ binom.test(.x, .y)) |>
@@ -223,7 +236,13 @@ estimate_trend_pos <- function(
         names_to = "modeltype",
         names_pattern = "significant_(\\d_\\w*)",
         values_to = "significant"
+      ) |> # correctie omdat het tweede model veel simulaties met NA heeft
+      mutate(
+        sims =
+          ifelse(.data$modeltype == "2_lengte_aantal", .data$sims_p2, .data$sims),
+        sims_p2 = NULL
       ) |>
+      filter(!is.na(significant)) |>
       mutate(
         simpower = .data$significant / .data$sims,
         lcl = map2(.data$significant, .data$sims, ~ binom.test(.x, .y)) |>
@@ -243,7 +262,13 @@ estimate_trend_pos <- function(
       names_to = "modeltype",
       names_pattern = "significant_(\\d_\\w*)",
       values_to = "significant"
+    ) |> # correctie omdat het tweede model veel simulaties met NA heeft
+    mutate(
+      sims =
+        ifelse(.data$modeltype == "2_lengte_aantal", .data$sims_p2, .data$sims),
+      sims_p2 = NULL
     ) |>
+    filter(!is.na(significant)) |>
     mutate(
       simpower = .data$significant / .data$sims,
       lcl = map2(.data$significant, .data$sims, ~ binom.test(.x, .y)) |>
@@ -340,7 +365,13 @@ estimate_trend_pos <- function(
         names_to = "modeltype",
         names_pattern = "significant_(\\d_\\w*)",
         values_to = "significant"
+      ) |> # correctie omdat het tweede model veel simulaties met NA heeft
+      mutate(
+        sims =
+          ifelse(.data$modeltype == "2_lengte_aantal", .data$sims_p2, .data$sims),
+        sims_p2 = NULL
       ) |>
+      filter(!is.na(significant)) |>
       mutate(
         simpower = .data$significant / .data$sims,
         lcl = map2(.data$significant, .data$sims, ~ binom.test(.x, .y)) |>
@@ -376,7 +407,13 @@ estimate_trend_pos <- function(
       names_to = "modeltype",
       names_pattern = "significant_(\\d_\\w*)",
       values_to = "significant"
+    ) |> # correctie omdat het tweede model veel simulaties met NA heeft
+    mutate(
+      sims =
+        ifelse(.data$modeltype == "2_lengte_aantal", .data$sims_p2, .data$sims),
+      sims_p2 = NULL
     ) |>
+    filter(!is.na(significant)) |>
     mutate(
       simpower = .data$significant / .data$sims,
       lcl = map2(.data$significant, .data$sims, ~ binom.test(.x, .y)) |>

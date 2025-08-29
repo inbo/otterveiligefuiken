@@ -88,7 +88,8 @@ estimate_trend_pos_waterlichaam <- function(
           SUM(p1v1 < %f) AS significant_1_lengte,
           SUM(p2v1 < %f) AS significant_2_lengte_aantal,
           SUM(p3 < %f) AS significant_3_aantal,
-          COUNT(n_datum) AS sims
+          COUNT(n_datum) AS sims,
+          SUM(p2v2 IS NOT NULL) AS sims_p2
    FROM trend
    WHERE soortnaam = '%s'
      AND methode = '1 waterlichaam'
@@ -119,6 +120,11 @@ estimate_trend_pos_waterlichaam <- function(
       names_to = "modeltype",
       names_pattern = "significant_(\\d_\\w*)",
       values_to = "significant"
+    ) |>  # correctie omdat het tweede model veel simulaties met NA heeft
+    mutate(
+      sims =
+        ifelse(.data$modeltype == "2_lengte_aantal", .data$sims_p2, .data$sims),
+      sims_p2 = NULL
     ) |>
     filter(!is.na(significant)) |>
     mutate(
@@ -167,6 +173,11 @@ estimate_trend_pos_waterlichaam <- function(
         names_to = "modeltype",
         names_pattern = "significant_(\\d_\\w*)",
         values_to = "significant"
+      ) |>  # correctie omdat het tweede model veel simulaties met NA heeft
+      mutate(
+        sims =
+          ifelse(.data$modeltype == "2_lengte_aantal", .data$sims_p2, .data$sims),
+        sims_p2 = NULL
       ) |>
       filter(!is.na(significant)) |>
       mutate(
@@ -222,6 +233,11 @@ estimate_trend_pos_waterlichaam <- function(
         names_to = "modeltype",
         names_pattern = "significant_(\\d_\\w*)",
         values_to = "significant"
+      ) |>  # correctie omdat het tweede model veel simulaties met NA heeft
+      mutate(
+        sims =
+          ifelse(.data$modeltype == "2_lengte_aantal", .data$sims_p2, .data$sims),
+        sims_p2 = NULL
       ) |>
       filter(!is.na(significant)) |>
       mutate(
@@ -241,6 +257,11 @@ estimate_trend_pos_waterlichaam <- function(
       names_to = "modeltype",
       names_pattern = "significant_(\\d_\\w*)",
       values_to = "significant"
+    ) |>  # correctie omdat het tweede model veel simulaties met NA heeft
+    mutate(
+      sims =
+        ifelse(.data$modeltype == "2_lengte_aantal", .data$sims_p2, .data$sims),
+      sims_p2 = NULL
     ) |>
     filter(!is.na(significant)) |>
     mutate(
@@ -338,6 +359,11 @@ estimate_trend_pos_waterlichaam <- function(
         names_to = "modeltype",
         names_pattern = "significant_(\\d_\\w*)",
         values_to = "significant"
+      ) |>  # correctie omdat het tweede model veel simulaties met NA heeft
+      mutate(
+        sims =
+          ifelse(.data$modeltype == "2_lengte_aantal", .data$sims_p2, .data$sims),
+        sims_p2 = NULL
       ) |>
       filter(!is.na(significant)) |>
       mutate(
@@ -375,6 +401,11 @@ estimate_trend_pos_waterlichaam <- function(
       names_to = "modeltype",
       names_pattern = "significant_(\\d_\\w*)",
       values_to = "significant"
+    ) |>  # correctie omdat het tweede model veel simulaties met NA heeft
+    mutate(
+      sims =
+        ifelse(.data$modeltype == "2_lengte_aantal", .data$sims_p2, .data$sims),
+      sims_p2 = NULL
     ) |>
     filter(!is.na(significant)) |>
     mutate(
