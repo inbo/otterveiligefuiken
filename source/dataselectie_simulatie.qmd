@@ -99,6 +99,34 @@ metingen_meren |>
   )
 ```
 
+Voor het Vinne zijn er op 3 oktober 2024 verschillende types beverveilige fuiken getest,
+maar dit is niet genoteerd, dus de fuiken van die datum laten we buiten beschouwing.
+
+```{r}
+metingen_meren <- metingen_meren |>
+  filter(!(WaterlichaamNaam == "Vinne" & WaarnemingDatumWID == "20241003"))
+```
+
+Ook gegevens weglaten van de combinatie van soort en plas als die soort zeer weinig in die plas gevangen is.
+
+```{r}
+selectie_soorten <- metingen_meren |>
+  filter(NaamNL %in% c("baars", "blankvoorn", "paling", "pos", "snoekbaars", "rietvoorn", "blauwband", "bittervoorn", "kolblei", "karper", "brasem", "zwartbekgrondel", "zonnebaars", "giebel", "snoek")) |>
+  group_by(WaterlichaamNaam, NaamNL) |>
+  mutate(
+    aantal_per_plas = sum(MetingTaxonAantal)
+  ) |>
+  ungroup() |>
+  filter(aantal_per_plas > 5)
+
+selectie_soorten |>
+  select(
+    VispuntID, WaterlichaamNaam, WaarnemingDatumWID, NaamNL,
+    MetingTaxonAantal, MetingTaxonLengteTotaal, MetingTaxonGewicht
+  ) |>
+  write_csv("../data/afvissingsdata.csv")
+```
+
 Als er zeer veel exemplaren gevangen zijn (> 100 van een soort per locatie) dan zijn niet alle vissen opgemeten als tijdsbesparende maatregel.
 Van de eerst opgehaalde fuiken worden wel alle vissen gemeten,
 en dit gebeurt met elke fuik tot er minstens 100 vissen van die soort opgemeten zijn.
@@ -119,13 +147,7 @@ metingen_meren <- metingen_meren |>
   anti_join(niet_volledig_gemeten, by = c("WaarnemingWID", "TaxonWID"))
 ```
 
-Voor het Vinne zijn er op 3 oktober 2024 verschillende types beverveilige fuiken getest,
-maar dit is niet genoteerd, dus de fuiken van die datum laten we buiten beschouwing.
 
-```{r}
-metingen_meren <- metingen_meren |>
-  filter(!(WaterlichaamNaam == "Vinne" & WaarnemingDatumWID == "20241003"))
-```
 
 ```{r}
 max_vislengte_otterfuik <- data.frame(
