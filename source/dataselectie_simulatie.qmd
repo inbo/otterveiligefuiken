@@ -177,6 +177,19 @@ aantal_vissen <- metingen_meren |>
     cols = c("SF", "SFO"), names_to = "fuiktype", values_to = "aantal_ind"
   )
 
+plotly::ggplotly(aantal_vissen |>
+  filter(NaamNL %in% c("baars", "blankvoorn", "paling", "snoekbaars", "brasem")) |>
+  ggplot(aes(x = aantal_ind, fill = waterlichaam)) + geom_bar() +
+  facet_wrap(~NaamNL))
+
+plotly::ggplotly(metingen_meren |>
+  filter(
+    NaamNL %in% c("baars", "blankvoorn", "paling", "snoekbaars", "brasem"),
+    !is.na(MetingTaxonLengteTotaal)
+  ) |>
+  ggplot(aes(x = MetingTaxonLengteTotaal, fill = WaterlichaamNaam)) + geom_bar() +
+  facet_wrap(~NaamNL))
+
 library(lme4)
 lmer(
   aantal_ind ~ fuiktype + (1 | waterlichaam_id),
