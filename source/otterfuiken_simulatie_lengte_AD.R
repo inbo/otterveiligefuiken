@@ -94,9 +94,9 @@ calculate_sd_for_species(soortnaam = "snoekbaars", dataset_aantal = empirical_aa
 estimate_trend_pos(
   soortnaam = "snoekbaars",
   lengte_soort = empirical_length |> filter(soort == "snoekbaars"),
-  n_waterlichaam = 1,
+  n_waterlichaam = 2,
   n_datum = 2,
-  n_vispunt = 10,
+  n_vispunt = 5,
   drempel_lengte = 20,
   voorkeur_standaard = 0.5,
   count_intercept = 1.2,
@@ -123,7 +123,7 @@ estimate_trend_pos_waterlichaam(
   drempel_lengte = 20,
   voorkeur_standaard = 0.5,
   count_intercept = 1.2,
-  intercept_waterlichaam = 0,
+  intercept_waterlichaam = 0,  # Donkmeer of Galgenweel
   count_sd_datum = 2.2,
   count_sd_vispunt = 1.2,
   n_sim = 100,
@@ -150,15 +150,35 @@ calculate_sd_for_species(soortnaam = "blankvoorn", dataset_aantal = empirical_aa
 estimate_trend_pos(
   soortnaam = "blankvoorn",
   lengte_soort = empirical_length |> filter(soort == "blankvoorn"),
-  n_waterlichaam = 1,
+  n_waterlichaam = 2,
   n_datum = 2,
-  n_vispunt = 10,
+  n_vispunt = 5,
   drempel_lengte = 20,
   voorkeur_standaard = 0.5,
-  count_intercept = 0,
-  count_sd_waterlichaam = 3e-13,
-  count_sd_datum = 1e-11,
-  count_sd_vispunt = 2e-10,
+  count_intercept = 1,
+  count_sd_waterlichaam = 1.6,
+  count_sd_datum = 2.4,
+  count_sd_vispunt = 1.7,
+  n_sim = 100,
+  alpha = 0.10,   # significantieniveau (α)
+  power = 0.90,   # gewenste statistische power
+  step_size = 1,
+  connection = duckdb::dbConnect(
+    duckdb::duckdb(), dbdir = "C:/Users/els_lommelen/Documents/data/otterveiligefuiken/power_cc.duckdb", read_only = FALSE
+  )
+)
+
+estimate_trend_pos_waterlichaam(
+  soortnaam = "blankvoorn",
+  lengte_soort = empirical_length |> filter(soort == "blankvoorn"),
+  n_datum = 2,
+  n_vispunt = 5,
+  drempel_lengte = 20,
+  voorkeur_standaard = 0.5,
+  count_intercept = 1,
+  intercept_waterlichaam = 0, # Donkmeer en Grindplas Kessenich: 1.2
+  count_sd_datum = 2.4,
+  count_sd_vispunt = 1.7,
   n_sim = 100,
   alpha = 0.10,   # significantieniveau (α)
   power = 0.90,   # gewenste statistische power
@@ -170,7 +190,6 @@ estimate_trend_pos(
 
 
 
-
 # BAARS
 
 calculate_sd_for_species(soortnaam = "baars", dataset_aantal = empirical_aantal)
@@ -178,15 +197,35 @@ calculate_sd_for_species(soortnaam = "baars", dataset_aantal = empirical_aantal)
 estimate_trend_pos(
   soortnaam = "baars",
   lengte_soort = empirical_length |> filter(soort == "baars"),
-  n_waterlichaam = 1,
+  n_waterlichaam = 2,
   n_datum = 2,
-  n_vispunt = 10,
+  n_vispunt = 5,
   drempel_lengte = 20,
   voorkeur_standaard = 0.5,
-  count_intercept = 0,
-  count_sd_waterlichaam = 2e-11,
-  count_sd_datum = 5e-11,
-  count_sd_vispunt = 2e-10,
+  count_intercept = 2,
+  count_sd_waterlichaam = 0.5,
+  count_sd_datum = 3.2,
+  count_sd_vispunt = 1.8,
+  n_sim = 100,
+  alpha = 0.10,   # significantieniveau (α)
+  power = 0.90,   # gewenste statistische power
+  step_size = 1,
+  connection = duckdb::dbConnect(
+    duckdb::duckdb(), dbdir = "C:/Users/els_lommelen/Documents/data/otterveiligefuiken/power_cc.duckdb", read_only = FALSE
+  )
+)
+
+estimate_trend_pos_waterlichaam(
+  soortnaam = "baars",
+  lengte_soort = empirical_length |> filter(soort == "baars"),
+  n_datum = 2,
+  n_vispunt = 5,
+  drempel_lengte = 20,
+  voorkeur_standaard = 0.5,
+  count_intercept = 2,
+  intercept_waterlichaam = 0,  # = waarde voor Donkmeer, enkele plassen beter
+  count_sd_datum = 3.2,
+  count_sd_vispunt = 1.8,
   n_sim = 100,
   alpha = 0.10,   # significantieniveau (α)
   power = 0.90,   # gewenste statistische power

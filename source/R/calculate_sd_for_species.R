@@ -17,6 +17,8 @@ calculate_sd_for_species <- function(
   count_sd_waterlichaam <- VarCorr(model_count)$cond$waterlichaam
   count_sd_datum <- VarCorr(model_count)$cond$datum_id
   count_sd_vispunt <- VarCorr(model_count)$cond$vispunt_id
+  print("intercept per waterlichaam:")
+  print(ranef(model_count)$cond$waterlichaam)
 
   return(
     c(
